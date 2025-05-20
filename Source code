@@ -1,0 +1,248 @@
+# Importing necessary libraries
+import pandas as pd 
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_splitfrom
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from google.colab import files
+uploaded= files.upload()
+df = pd.read_csv("Telco-Customer-Churn.csv")
+print(df.head())
+# Check for missing values
+print(df.isnull().sum())
+# Convert TotalCharges to numeric (it has missing/blank values)
+df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors='coerce')
+# Fill missing values with median
+df["TotalCharges"].fillna(df["TotalCharges"].median(), inplace=True)
+# Check for duplicates
+print("Duplicates:", df.duplicated().sum())
+# Drop duplicates if any
+df.drop_duplicates(inplace=True)
+import seaborn as sns
+import matplotlib.pyplot as plt
+# Boxplot before removing outliers
+sns.boxplot(x=df["MonthlyCharges"])
+plt.title("Before Removing Outliers - MonthlyCharges")
+plt.show()
+# Remove outliers using IQR
+Q1 = df["MonthlyCharges"].quantile(0.25)
+Q3 = df["MonthlyCharges"].quantile(0.75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+df = df[(df["MonthlyCharges"] >= lower_bound) & (df["MonthlyCharges"] <= upper_bound)]
+# Boxplot after removing outliers
+sns.boxplot(x=df["MonthlyCharges"])
+plt.title("After Removing Outliers - MonthlyCharges")
+plt.show()
+from sklearn.preprocessing import LabelEncoder
+df_encoded = df.copy()
+categorical_cols = df_encoded.select_dtypes(include='object').columns.tolist() # Convert to list to easily 
+remove items
+# Drop customerID as it's not useful
+if 'customerID' in categorical_cols: # Check if 'customerID' is in the list before removing
+categorical_cols.remove('customerID')
+df_encoded.drop("customerID", axis=1, inplace=True)
+# Label encode binary categorical features
+le = LabelEncoder()
+for col in categorical_cols:
+# Ensure the column still exists in df_encoded after potential drops
+if col in df_encoded.columns:
+if df_encoded[col].nunique() == 2:
+df_encoded[col] = le.fit_transform(df_encoded[col])
+# The 'elif col != 'customerID':` is no longer needed since 'customerID' is removed from categorical_cols
+else:
+df_encoded = pd.get_dummies(df_encoded, columns=[col], prefix=col, drop_first=True) # Added 
+drop_first=True for dummy variables
+print(df_encoded.head())
+from sklearn.preprocessing import StandardScaler
+# Scale numerical columns
+scaler = StandardScaler()
+numeric_cols = ['tenure', 'MonthlyCharges', 'TotalCharges']
+df_encoded[numeric_cols] = scaler.fit_transform(df_encoded[numeric_cols])
+print(df_encoded[numeric_cols].describe())
+sns.histplot(df["MonthlyCharges"], kde=True)
+plt.title("Before Scaling - MonthlyCharges")
+plt.show()
+# Assuming you want to scale numerical features and store the result in df_encoded
+# This is a placeholder and might need adjustment based on your full data processing steps
+from sklearn.preprocessing import StandardScaler
+# Select the numerical column(s) to scale
+numerical_cols = ['MonthlyCharges']
+# Create a copy of the original DataFrame to avoid modifying it directly
+df_encoded = df.copy()
+# Initialize the StandardScaler
+scaler = StandardScaler()
+# Fit and transform the numerical column(s)
+df_encoded[numerical_cols] = scaler.fit_transform(df_encoded[numerical_cols])
+# Now you can plot the scaled 'MonthlyCharges'
+sns.histplot(df_encoded["MonthlyCharges"], kde=True)
+plt.title("After Scaling - MonthlyCharges")
+plt.show()
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+# Load dataset
+df = pd.read_csv("Telco-Customer-Churn.csv")
+# Convert TotalCharges to numeric and handle missing values
+df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors='coerce')
+df["TotalCharges"].fillna(df["TotalCharges"].median(), inplace=True)
+# Drop customerID
+df.drop("customerID", axis=1, inplace=True)
+# Encode target variable
+df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
+# Set seaborn style
+sns.set(style="whitegrid")
+# Histograms
+df[["tenure", "MonthlyCharges", "TotalCharges"]].hist(bins=30, figsize=(10, 6), color='skyblue')
+plt.suptitle("Histograms of Numerical Features")
+plt.show()
+# Boxplot: Monthly Charges vs Churn
+plt.figure(figsize=(10, 4))
+sns.boxplot(x='Churn', y='MonthlyCharges', data=df)
+plt.title('Monthly Charges vs Churn')
+plt.show()
+# Correlation Heatmap
+plt.figure(figsize=(10, 8))
+correlation_matrix = df_encoded.corr()
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.show()
+# Import required libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import seaborn as sns
+import matplotlib.pyplot as plt
+# Load dataset
+df = pd.read_csv("Telco-Customer-Churn.csv")
+# Data Preprocessing
+df.drop('customerID', axis=1, inplace=True)
+df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
+df['TotalCharges'].fillna(df['TotalCharges'].median(), inplace=True)
+# Encode categorical variables
+le = LabelEncoder()
+df['Churn'] = le.fit_transform(df['Churn']) # Yes/No to 1/0
+for column in df.select_dtypes(include='object').columns:
+if df[column].nunique() == 2:
+df[column] = le.fit_transform(df[column])
+else:
+df = pd.get_dummies(df, columns=[column])
+# Feature Scaling
+scaler = StandardScaler()
+df[['tenure', 'MonthlyCharges', 'TotalCharges']] = scaler.fit_transform(df[['tenure', 'MonthlyCharges', 
+'TotalCharges']])
+# Split data
+X = df.drop('Churn', axis=1)
+y = df['Churn']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# ----------------------------
+# Logistic Regression
+# ----------------------------
+log_model = LogisticRegression(max_iter=1000)
+log_model.fit(X_train, y_train)
+y_pred_log = log_model.predict(X_test)
+print(" Logistic Regression Results:")
+print("Accuracy:", accuracy_score(y_test, y_pred_log))
+print(classification_report(y_test, y_pred_log))
+sns.heatmap(confusion_matrix(y_test, y_pred_log), annot=True, fmt='d', cmap='Blues')
+plt.title("Logistic Regression - Confusion Matrix")
+plt.show()
+# ----------------------------
+# Random Forest
+# ----------------------------
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+y_pred_rf = rf_model.predict(X_test)
+print("\n Random Forest Results:")
+print("Accuracy:", accuracy_score(y_test, y_pred_rf))
+print(classification_report(y_test, y_pred_rf))
+sns.heatmap(confusion_matrix(y_test, y_pred_rf), annot=True, fmt='d', cmap='Greens')
+plt.title("Random Forest - Confusion Matrix")
+plt.show()
+!pip install gradio
+import gradio as gr 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import (
+accuracy_score, f1_score, roc_auc_score,
+mean_squared_error, confusion_matrix, roc_curve
+)
+# Load dataset
+df = pd.read_csv("Telco-Customer-Churn.csv")
+# Data preprocessing
+df.drop('customerID', axis=1, inplace=True)
+df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
+df['TotalCharges'].fillna(df['TotalCharges'].median(), inplace=True)
+le = LabelEncoder()
+df['Churn'] = le.fit_transform(df['Churn'])
+for col in df.select_dtypes(include='object').columns:
+if df[col].nunique() == 2:
+df[col] = le.fit_transform(df[col])
+else:
+df = pd.get_dummies(df, columns=[col])
+scaler = StandardScaler()
+df[['tenure', 'MonthlyCharges', 'TotalCharges']] = scaler.fit_transform(df[['tenure', 'MonthlyCharges', 
+'TotalCharges']])
+# Split data
+X = df.drop("Churn", axis=1)
+y = df["Churn"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Train models
+log_model = LogisticRegression(max_iter=1000)
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+log_model.fit(X_train, y_train)
+rf_model.fit(X_train, y_train)
+# Predictions
+log_preds = log_model.predict(X_test)
+rf_preds = rf_model.predict(X_test)
+# Evaluation metrics
+print("Logistic Regression")
+print("Accuracy:", accuracy_score(y_test, log_preds))
+print("F1 Score:", f1_score(y_test, log_preds))
+print("ROC AUC:", roc_auc_score(y_test, log_model.predict_proba(X_test)[:, 1]))
+print("RMSE:", np.sqrt(mean_squared_error(y_test, log_preds)))
+print(confusion_matrix(y_test, log_preds))
+print("\nRandom Forest")
+print("Accuracy:", accuracy_score(y_test, rf_preds))
+print("F1 Score:", f1_score(y_test, rf_preds))
+print("ROC AUC:", roc_auc_score(y_test, rf_model.predict_proba(X_test)[:, 1]))
+print("RMSE:", np.sqrt(mean_squared_error(y_test, rf_preds)))
+print(confusion_matrix(y_test, rf_preds))
+# Confusion matrix plots
+sns.heatmap(confusion_matrix(y_test, log_preds), annot=True, fmt='d', cmap='Blues')
+plt.title("Confusion Matrix - Logistic Regression")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+sns.heatmap(confusion_matrix(y_test, rf_preds), annot=True, fmt='d', cmap='Greens')
+plt.title("Confusion Matrix - Random Forest")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
+# ROC curves
+log_fpr, log_tpr, _ = roc_curve(y_test, log_model.predict_proba(X_test)[:, 1])
+rf_fpr, rf_tpr, _ = roc_curve(y_test, rf_model.predict_proba(X_test)[:, 1])
+plt.figure(figsize=(8, 6))
+plt.plot(log_fpr, log_tpr, label='Logistic Regression')
+plt.plot(rf_fpr, rf_tpr, label='Random Forest')
+plt.plot([0, 1], [0, 1], 'k--')
+plt.title("ROC Curve")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.legend()
+plt.grid(True)
+plt.show()
